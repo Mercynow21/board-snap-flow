@@ -1,6 +1,6 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import CardItem from "./CardItem";
 import { KanbanColumn } from "./types";
 
@@ -27,10 +27,15 @@ const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle }: ColumnPr
   };
 
   const { setNodeRef } = useDroppable({ id: column.id });
+  const { setNodeRef: setColRef, attributes, listeners, transform, transition } = useSortable({ id: column.id });
+  const colStyle: CSSProperties = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
 
   return (
-    <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border" aria-labelledby={`col-${column.id}-title`}>
-      <header className="px-1 pb-1">
+    <section ref={setColRef} style={colStyle} className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border" aria-labelledby={`col-${column.id}-title`}>
+      <header className="px-1 pb-1 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
         <h2 id={`col-${column.id}-title`} className="text-sm font-semibold tracking-wide flex items-center gap-2">
           <span>{column.title}</span>
           <span className="text-xs text-muted-foreground">({column.cards.length})</span>

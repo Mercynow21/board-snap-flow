@@ -11,7 +11,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 
 const Board = () => {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -211,6 +211,26 @@ const Board = () => {
     const activeId = String(active.id);
     const overId = String(over.id);
 
+    // Reorder columns horizontally
+    if (columns.some((c) => c.id === activeId) && columns.some((c) => c.id === overId)) {
+      const oldIndex = columns.findIndex((c) => c.id === activeId);
+      const newIndex = columns.findIndex((c) => c.id === overId);
+      const nextCols = arrayMove(columns, oldIndex, newIndex);
+      setColumns(nextCols);
+      try {
+        const results = await Promise.all(
+          nextCols.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id))
+        );
+        const err = results.find((r: any) => r.error);
+        if (err) throw err.error;
+      } catch (e: any) {
+        console.error('Persist column reorder failed', e);
+        toast({ title: 'Sync failed', description: e?.message || 'Could not save column order. Reverting.', variant: 'destructive' });
+        await loadBoard();
+      }
+      return;
+    }
+
     const fromColId = findColumnIdByCard(activeId);
     if (!fromColId) return;
 
@@ -312,40 +332,42 @@ const Board = () => {
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="overflow-x-auto">
           <div className="flex gap-4 pb-1">
-            {columns.map((col) => (
-              <Column
-                key={col.id}
-                column={col}
-                onAddCard={handleAddCard}
-                onDeleteCard={handleDeleteCard}
-                onUpdateCardTitle={handleUpdateCardTitle}
-              />
-            ))}
-            <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border">
-              <header className="px-1 pb-1">
-                <h2 className="text-sm font-semibold tracking-wide">Add Column</h2>
-              </header>
-              <div className="pt-1">
-                <div className="flex items-center gap-2">
-                  <input
-                    value={newColumnTitle}
-                    onChange={(e) => setNewColumnTitle(e.target.value)}
-                    onKeyDown={onAddColumnKeyDown}
-                    placeholder="Column title"
-                    aria-label="Column title"
-                    className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddColumn}
-                    className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:opacity-90"
-                    aria-label="Add column"
-                  >
-                    Add
-                  </button>
+            <SortableContext items={columns.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
+              {columns.map((col) => (
+                <Column
+                  key={col.id}
+                  column={col}
+                  onAddCard={handleAddCard}
+                  onDeleteCard={handleDeleteCard}
+                  onUpdateCardTitle={handleUpdateCardTitle}
+                />
+              ))}
+              <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border">
+                <header className="px-1 pb-1">
+                  <h2 className="text-sm font-semibold tracking-wide">Add Column</h2>
+                </header>
+                <div className="pt-1">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={newColumnTitle}
+                      onChange={(e) => setNewColumnTitle(e.target.value)}
+                      onKeyDown={onAddColumnKeyDown}
+                      placeholder="Column title"
+                      aria-label="Column title"
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddColumn}
+                      className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:opacity-90"
+                      aria-label="Add column"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </SortableContext>
           </div>
         </div>
       </DndContext>
