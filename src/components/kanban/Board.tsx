@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Column from "./Column";
 import { KanbanColumn } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Board = () => {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -61,12 +62,19 @@ const Board = () => {
       )
     );
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("cards")
-      .insert({ column_id: columnId, title, position });
+      .insert({ column_id: columnId, title, position })
+      .select()
+      .single();
 
     if (error) {
       console.error("Failed to add card", error);
+      toast({
+        title: "Failed to add card",
+        description: error.message || "Unknown error",
+        variant: "destructive",
+      });
       // Rollback optimistic update
       setColumns((prev) =>
         prev.map((c) =>
@@ -78,6 +86,11 @@ const Board = () => {
       return;
     }
 
+    console.log("Inserted card", data);
+    toast({
+      title: "Card created",
+      description: `“${title}” added to ${col?.title ?? "column"}.`,
+    });
     // Refresh from DB to sync ids/positions
     await loadBoard();
   };
