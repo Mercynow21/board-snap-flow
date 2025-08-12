@@ -63,12 +63,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
-			keyframes: {
+				borderRadius: {
+					lg: 'var(--radius)',
+					md: 'calc(var(--radius) - 2px)',
+					sm: 'calc(var(--radius) - 4px)'
+				},
+				fontFamily: {
+					sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif']
+				},
+				keyframes: {
 				'accordion-down': {
 					from: {
 						height: '0'

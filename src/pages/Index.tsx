@@ -1,12 +1,19 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Board from "@/components/kanban/Board";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 py-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold">Lightweight Kanban Board</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trello-style board. Drag-and-drop ready. Supabase persistence coming next.
+          </p>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <Board />
+      </main>
     </div>
   );
 };
