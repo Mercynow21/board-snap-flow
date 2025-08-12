@@ -11,7 +11,7 @@ const CardItem = ({ card }: CardItemProps) => {
       aria-label={card.title}
     >
       <div className="px-3 py-2">
-        <h3 className="text-sm font-medium leading-5">{card.title}</h3>
+        <h3 className="text-sm font-medium leading-5 truncate">{card.title}</h3>
       </div>
     </article>
   );

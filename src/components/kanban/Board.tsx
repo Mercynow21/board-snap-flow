@@ -30,14 +30,38 @@ const initialColumns: KanbanColumn[] = [
 ];
 
 const Board = () => {
-  const [columns] = useState<KanbanColumn[]>(initialColumns);
+  const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
+
+  const handleAddCard = (columnId: string, title: string) => {
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === columnId
+          ? {
+              ...col,
+              cards: [
+                ...col.cards,
+                {
+                  id:
+                    typeof crypto !== "undefined" && "randomUUID" in crypto
+                      ? (crypto as any).randomUUID()
+                      : `${Date.now()}-${Math.random()}`,
+                  title,
+                },
+              ],
+            }
+          : col
+      )
+    );
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {columns.map((col) => (
-          <Column key={col.id} column={col} />
-        ))}
+      <div className="overflow-x-auto">
+        <div className="flex gap-4 pb-1">
+          {columns.map((col) => (
+            <Column key={col.id} column={col} onAddCard={handleAddCard} />
+          ))}
+        </div>
       </div>
     </div>
   );
