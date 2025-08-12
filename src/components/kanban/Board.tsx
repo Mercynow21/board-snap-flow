@@ -95,12 +95,45 @@ const Board = () => {
     await loadBoard();
   };
 
+  const handleDeleteCard = async (columnId: string, cardId: string) => {
+    const prev = columns;
+    // Optimistic remove
+    const updated = columns.map((c) =>
+      c.id === columnId ? { ...c, cards: c.cards.filter((card) => card.id !== cardId) } : c
+    );
+    setColumns(updated);
+
+    const { error: delError } = await supabase.from('cards').delete().eq('id', cardId);
+    if (delError) {
+      console.error('Failed to delete card', delError);
+      toast({ title: 'Failed to delete card', description: delError.message || 'Unknown error', variant: 'destructive' });
+      setColumns(prev);
+      return;
+    }
+
+    const remaining = updated.find((c) => c.id === columnId)?.cards ?? [];
+    const results = await Promise.all(
+      remaining.map((card, idx) =>
+        supabase.from('cards').update({ position: idx }).eq('id', card.id)
+      )
+    );
+    const updateError = results.find((r: any) => r?.error);
+    if (updateError) {
+      console.warn('Positions reindex failed after delete', updateError);
+      toast({ title: 'Card deleted', description: 'Reorder sync partially failed. Refresh if order looks off.' });
+    } else {
+      toast({ title: 'Card deleted' });
+    }
+
+    await loadBoard();
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="overflow-x-auto">
         <div className="flex gap-4 pb-1">
           {columns.map((col) => (
-            <Column key={col.id} column={col} onAddCard={handleAddCard} />
+            <Column key={col.id} column={col} onAddCard={handleAddCard} onDeleteCard={handleDeleteCard} />
           ))}
         </div>
       </div>

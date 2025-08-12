@@ -5,9 +5,10 @@ import { KanbanColumn } from "./types";
 interface ColumnProps {
   column: KanbanColumn;
   onAddCard: (columnId: string, title: string) => void;
+  onDeleteCard: (columnId: string, cardId: string) => void;
 }
 
-const Column = ({ column, onAddCard }: ColumnProps) => {
+const Column = ({ column, onAddCard, onDeleteCard }: ColumnProps) => {
   const [newTitle, setNewTitle] = useState("");
   const submit = () => {
     const t = newTitle.trim();
@@ -31,7 +32,7 @@ const Column = ({ column, onAddCard }: ColumnProps) => {
       </header>
       <div className="flex flex-col gap-3">
         {column.cards.map((card) => (
-          <CardItem key={card.id} card={card} />
+          <CardItem key={card.id} card={card} onDelete={() => onDeleteCard(column.id, card.id)} />
         ))}
       </div>
       <div className="pt-1">
