@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type CSSProperties } from "react";
+import { useState, useEffect, type KeyboardEvent, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,10 @@ interface ColumnProps {
   onDeleteCard: (columnId: string, cardId: string) => void;
   onUpdateCardTitle: (columnId: string, cardId: string, title: string) => void;
   onDeleteColumn: (columnId: string) => void;
+  onUpdateColumnTitle: (columnId: string, title: string) => void;
 }
 
-const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle, onDeleteColumn }: ColumnProps) => {
+const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle, onDeleteColumn, onUpdateColumnTitle }: ColumnProps) => {
   const [newTitle, setNewTitle] = useState("");
   const submit = () => {
     const t = newTitle.trim();
@@ -29,6 +30,24 @@ const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle, onDeleteCo
     }
   };
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState(column.title);
+  useEffect(() => { setTitleValue(column.title); }, [column.title]);
+
+  const commitTitle = () => {
+    const t = titleValue.trim();
+    if (!t) { setIsEditingTitle(false); setTitleValue(column.title); return; }
+    if (t !== column.title) onUpdateColumnTitle(column.id, t);
+    setIsEditingTitle(false);
+  };
+
+  const cancelTitle = () => { setIsEditingTitle(false); setTitleValue(column.title); };
+
+  const onTitleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { e.preventDefault(); commitTitle(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancelTitle(); }
+  };
+
   const { setNodeRef } = useDroppable({ id: column.id });
   const { setNodeRef: setColRef, attributes, listeners, transform, transition } = useSortable({ id: column.id });
   const colStyle: CSSProperties = {
@@ -40,9 +59,30 @@ const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle, onDeleteCo
     <section ref={setColRef} style={colStyle} className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border" aria-labelledby={`col-${column.id}-title`}>
       <header className="px-1 pb-1 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
         <div className="flex items-center justify-between gap-2">
-          <h2 id={`col-${column.id}-title`} className="text-sm font-semibold tracking-wide flex items-center gap-2">
-            <span>{column.title}</span>
-            <span className="text-xs text-muted-foreground">({column.cards.length})</span>
+          <h2 id={`col-${column.id}-title`} className="text-sm font-semibold tracking-wide">
+            {isEditingTitle ? (
+              <input
+                autoFocus
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={onTitleKeyDown}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="w-full rounded-sm border border-transparent bg-transparent px-1 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Edit column title"
+              />
+            ) : (
+              <button
+                type="button"
+                className="inline-flex items-center gap-2"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => setIsEditingTitle(true)}
+                aria-label="Rename column"
+              >
+                <span>{column.title}</span>
+                <span className="text-xs text-muted-foreground">({column.cards.length})</span>
+              </button>
+            )}
           </h2>
           <Button
             variant="ghost"

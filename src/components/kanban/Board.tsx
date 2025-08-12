@@ -236,6 +236,19 @@ const Board = () => {
     await loadBoard();
   };
 
+  const handleUpdateColumnTitle = async (columnId: string, newTitle: string) => {
+    const title = newTitle.trim();
+    if (!title) return;
+    const prev = columns;
+    setColumns((cur) => cur.map((c) => (c.id === columnId ? { ...c, title } : c)));
+    const { error } = await supabase.from('columns').update({ title }).eq('id', columnId);
+    if (error) {
+      console.error('Failed to rename column', error);
+      toast({ title: 'Failed to rename column', description: error.message || 'Unknown error', variant: 'destructive' });
+      setColumns(prev);
+    }
+  };
+
   const findColumnIdByCard = (cardId: string) => {
     for (const c of columns) {
       if (c.cards.some((card) => card.id === cardId)) return c.id;
@@ -378,6 +391,7 @@ const Board = () => {
                   onDeleteCard={handleDeleteCard}
                   onUpdateCardTitle={handleUpdateCardTitle}
                   onDeleteColumn={handleDeleteColumn}
+                  onUpdateColumnTitle={handleUpdateColumnTitle}
                 />
               ))}
               <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border">
