@@ -13,6 +13,8 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 
+const PROJECT_ID = '00000000-0000-0000-0000-000000000001';
+
 const Board = () => {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const sensors = useSensors(
@@ -25,6 +27,7 @@ const Board = () => {
     const { data: cols, error: colsError } = await supabase
       .from("columns")
       .select("*")
+      .eq("project_id", PROJECT_ID)
       .order("position", { ascending: true });
     if (colsError) {
       console.error("Failed to load columns", colsError);
@@ -34,6 +37,7 @@ const Board = () => {
     const { data: cards, error: cardsError } = await supabase
       .from("cards")
       .select("*")
+      .eq("project_id", PROJECT_ID)
       .order("position", { ascending: true });
     if (cardsError) {
       console.error("Failed to load cards", cardsError);
@@ -78,7 +82,7 @@ const Board = () => {
 
     const { data, error } = await supabase
       .from("cards")
-      .insert({ column_id: columnId, title, position })
+      .insert({ column_id: columnId, title, position, project_id: PROJECT_ID })
       .select()
       .single();
 
@@ -117,7 +121,7 @@ const Board = () => {
     );
     setColumns(updated);
 
-    const { error: delError } = await supabase.from('cards').delete().eq('id', cardId);
+    const { error: delError } = await supabase.from('cards').delete().eq('id', cardId).eq('project_id', PROJECT_ID);
     if (delError) {
       console.error('Failed to delete card', delError);
       toast({ title: 'Failed to delete card', description: delError.message || 'Unknown error', variant: 'destructive' });
@@ -128,7 +132,7 @@ const Board = () => {
     const remaining = updated.find((c) => c.id === columnId)?.cards ?? [];
     const results = await Promise.all(
       remaining.map((card, idx) =>
-        supabase.from('cards').update({ position: idx }).eq('id', card.id)
+        supabase.from('cards').update({ position: idx }).eq('id', card.id).eq('project_id', PROJECT_ID)
       )
     );
     const updateError = results.find((r: any) => r?.error);
@@ -156,7 +160,7 @@ const Board = () => {
       )
     );
 
-    const { error } = await supabase.from('cards').update({ title: newTitle }).eq('id', cardId);
+    const { error } = await supabase.from('cards').update({ title: newTitle }).eq('id', cardId).eq('project_id', PROJECT_ID);
     if (error) {
       console.error('Failed to update title', error);
       toast({ title: 'Failed to rename card', description: error.message || 'Unknown error', variant: 'destructive' });
@@ -182,7 +186,7 @@ const Board = () => {
 
     const { data, error } = await supabase
       .from('columns')
-      .insert({ title, position })
+      .insert({ title, position, project_id: PROJECT_ID })
       .select()
       .single();
 
@@ -205,7 +209,7 @@ const Board = () => {
     // Optimistic remove
     setColumns(filtered);
 
-    const { error: delCardsErr } = await supabase.from('cards').delete().eq('column_id', columnId);
+    const { error: delCardsErr } = await supabase.from('cards').delete().eq('column_id', columnId).eq('project_id', PROJECT_ID);
     if (delCardsErr) {
       console.error('Failed to delete column cards', delCardsErr);
       toast({ title: 'Failed to delete column', description: delCardsErr.message || 'Unknown error', variant: 'destructive' });
@@ -213,7 +217,7 @@ const Board = () => {
       return;
     }
 
-    const { error: delColErr } = await supabase.from('columns').delete().eq('id', columnId);
+    const { error: delColErr } = await supabase.from('columns').delete().eq('id', columnId).eq('project_id', PROJECT_ID);
     if (delColErr) {
       console.error('Failed to delete column', delColErr);
       toast({ title: 'Failed to delete column', description: delColErr.message || 'Unknown error', variant: 'destructive' });
@@ -223,7 +227,7 @@ const Board = () => {
 
     // Reindex remaining columns
     const results = await Promise.all(
-      filtered.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id))
+      filtered.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id).eq('project_id', PROJECT_ID))
     );
     const updErr = results.find((r: any) => r.error);
     if (updErr) {
@@ -241,7 +245,7 @@ const Board = () => {
     if (!title) return;
     const prev = columns;
     setColumns((cur) => cur.map((c) => (c.id === columnId ? { ...c, title } : c)));
-    const { error } = await supabase.from('columns').update({ title }).eq('id', columnId);
+    const { error } = await supabase.from('columns').update({ title }).eq('id', columnId).eq('project_id', PROJECT_ID);
     if (error) {
       console.error('Failed to rename column', error);
       toast({ title: 'Failed to rename column', description: error.message || 'Unknown error', variant: 'destructive' });
@@ -269,7 +273,7 @@ const Board = () => {
       setColumns(nextCols);
       try {
         const results = await Promise.all(
-          nextCols.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id))
+          nextCols.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id).eq('project_id', PROJECT_ID))
         );
         const err = results.find((r: any) => r.error);
         if (err) throw err.error;
@@ -331,7 +335,7 @@ const Board = () => {
       if (fromColId === toColId) {
         const col = next.find((c) => c.id === fromColId)!;
         const updates = col.cards.map((card, idx) =>
-          supabase.from("cards").update({ position: idx }).eq("id", card.id)
+          supabase.from("cards").update({ position: idx }).eq("id", card.id).eq('project_id', PROJECT_ID)
         );
         const results = await Promise.all(updates);
         const err = results.find((r: any) => r.error);
@@ -344,15 +348,16 @@ const Board = () => {
         const moveRes = await supabase
           .from("cards")
           .update({ column_id: toColId, position: movedIdx })
-          .eq("id", activeId);
+          .eq("id", activeId)
+          .eq('project_id', PROJECT_ID);
 
         if (moveRes.error) throw moveRes.error;
 
         const updFrom = fromAfter.map((card, idx) =>
-          supabase.from("cards").update({ position: idx }).eq("id", card.id)
+          supabase.from("cards").update({ position: idx }).eq("id", card.id).eq('project_id', PROJECT_ID)
         );
         const updTo = toAfter.map((card, idx) =>
-          supabase.from("cards").update({ position: idx }).eq("id", card.id)
+          supabase.from("cards").update({ position: idx }).eq("id", card.id).eq('project_id', PROJECT_ID)
         );
         const results = await Promise.all([...updFrom, ...updTo]);
         const err = results.find((r: any) => r.error);
