@@ -1,4 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import CardItem from "./CardItem";
 import { KanbanColumn } from "./types";
 
@@ -23,6 +25,8 @@ const Column = ({ column, onAddCard, onDeleteCard }: ColumnProps) => {
     }
   };
 
+  const { setNodeRef } = useDroppable({ id: column.id });
+
   return (
     <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border" aria-labelledby={`col-${column.id}-title`}>
       <header className="px-1 pb-1">
@@ -30,11 +34,13 @@ const Column = ({ column, onAddCard, onDeleteCard }: ColumnProps) => {
           {column.title}
         </h2>
       </header>
-      <div className="flex flex-col gap-3">
-        {column.cards.map((card) => (
-          <CardItem key={card.id} card={card} onDelete={() => onDeleteCard(column.id, card.id)} />
-        ))}
-      </div>
+      <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div ref={setNodeRef} className="flex flex-col gap-3">
+          {column.cards.map((card) => (
+            <CardItem key={card.id} card={card} onDelete={() => onDeleteCard(column.id, card.id)} />
+          ))}
+        </div>
+      </SortableContext>
       <div className="pt-1">
         <div className="flex items-center gap-2">
           <input

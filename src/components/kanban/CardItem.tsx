@@ -1,14 +1,26 @@
 import { KanbanCard } from "./types";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
 interface CardItemProps {
   card: KanbanCard;
   onDelete?: () => void;
 }
 
 const CardItem = ({ card, onDelete }: CardItemProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: isDragging ? 0.6 : undefined,
+  };
+
   return (
     <article
+      ref={setNodeRef}
+      style={style as React.CSSProperties}
+      {...attributes}
+      {...listeners}
       className="rounded-lg border border-border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-200"
       aria-label={card.title}
     >
