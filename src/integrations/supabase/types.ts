@@ -14,7 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cards: {
+        Row: {
+          column_id: string
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          column_id: string
+          id?: string
+          position: number
+          title: string
+        }
+        Update: {
+          column_id?: string
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cards_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "columns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      columns: {
+        Row: {
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          id?: string
+          position: number
+          title: string
+        }
+        Update: {
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
