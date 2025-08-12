@@ -19,18 +19,21 @@ export type Database = {
           column_id: string
           id: string
           position: number
+          project_id: string
           title: string
         }
         Insert: {
           column_id: string
           id?: string
           position: number
+          project_id?: string
           title: string
         }
         Update: {
           column_id?: string
           id?: string
           position?: number
+          project_id?: string
           title?: string
         }
         Relationships: [
@@ -41,22 +44,64 @@ export type Database = {
             referencedRelation: "columns"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
         ]
       }
       columns: {
         Row: {
           id: string
           position: number
+          project_id: string
           title: string
         }
         Insert: {
           id?: string
           position: number
+          project_id?: string
           title: string
         }
         Update: {
           id?: string
           position?: number
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "columns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          owner_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          owner_id?: string | null
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          owner_id?: string | null
           title?: string
         }
         Relationships: []
