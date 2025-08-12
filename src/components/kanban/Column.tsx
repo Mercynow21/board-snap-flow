@@ -31,8 +31,9 @@ const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle }: ColumnPr
   return (
     <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border" aria-labelledby={`col-${column.id}-title`}>
       <header className="px-1 pb-1">
-        <h2 id={`col-${column.id}-title`} className="text-sm font-semibold tracking-wide">
-          {column.title}
+        <h2 id={`col-${column.id}-title`} className="text-sm font-semibold tracking-wide flex items-center gap-2">
+          <span>{column.title}</span>
+          <span className="text-xs text-muted-foreground">({column.cards.length})</span>
         </h2>
       </header>
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
