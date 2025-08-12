@@ -199,6 +199,43 @@ const Board = () => {
     await loadBoard();
   };
 
+  const handleDeleteColumn = async (columnId: string) => {
+    const prev = columns;
+    const filtered = columns.filter((c) => c.id !== columnId);
+    // Optimistic remove
+    setColumns(filtered);
+
+    const { error: delCardsErr } = await supabase.from('cards').delete().eq('column_id', columnId);
+    if (delCardsErr) {
+      console.error('Failed to delete column cards', delCardsErr);
+      toast({ title: 'Failed to delete column', description: delCardsErr.message || 'Unknown error', variant: 'destructive' });
+      setColumns(prev);
+      return;
+    }
+
+    const { error: delColErr } = await supabase.from('columns').delete().eq('id', columnId);
+    if (delColErr) {
+      console.error('Failed to delete column', delColErr);
+      toast({ title: 'Failed to delete column', description: delColErr.message || 'Unknown error', variant: 'destructive' });
+      setColumns(prev);
+      return;
+    }
+
+    // Reindex remaining columns
+    const results = await Promise.all(
+      filtered.map((c, idx) => supabase.from('columns').update({ position: idx }).eq('id', c.id))
+    );
+    const updErr = results.find((r: any) => r.error);
+    if (updErr) {
+      console.warn('Column position reindex failed', updErr);
+      toast({ title: 'Column deleted', description: 'Reorder sync partially failed. Refresh if order looks off.' });
+    } else {
+      toast({ title: 'Column deleted' });
+    }
+
+    await loadBoard();
+  };
+
   const findColumnIdByCard = (cardId: string) => {
     for (const c of columns) {
       if (c.cards.some((card) => card.id === cardId)) return c.id;
@@ -340,6 +377,7 @@ const Board = () => {
                   onAddCard={handleAddCard}
                   onDeleteCard={handleDeleteCard}
                   onUpdateCardTitle={handleUpdateCardTitle}
+                  onDeleteColumn={handleDeleteColumn}
                 />
               ))}
               <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border">
