@@ -8,9 +8,10 @@ interface ColumnProps {
   column: KanbanColumn;
   onAddCard: (columnId: string, title: string) => void;
   onDeleteCard: (columnId: string, cardId: string) => void;
+  onUpdateCardTitle: (columnId: string, cardId: string, title: string) => void;
 }
 
-const Column = ({ column, onAddCard, onDeleteCard }: ColumnProps) => {
+const Column = ({ column, onAddCard, onDeleteCard, onUpdateCardTitle }: ColumnProps) => {
   const [newTitle, setNewTitle] = useState("");
   const submit = () => {
     const t = newTitle.trim();
@@ -37,7 +38,7 @@ const Column = ({ column, onAddCard, onDeleteCard }: ColumnProps) => {
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex flex-col gap-3">
           {column.cards.map((card) => (
-            <CardItem key={card.id} card={card} onDelete={() => onDeleteCard(column.id, card.id)} />
+            <CardItem key={card.id} card={card} onDelete={() => onDeleteCard(column.id, card.id)} onUpdateTitle={(t) => onUpdateCardTitle(column.id, card.id, t)} />
           ))}
         </div>
       </SortableContext>

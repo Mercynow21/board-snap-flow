@@ -1,10 +1,17 @@
-import { useEffect, useState } from "react";
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import Column from "./Column";
 import { KanbanColumn } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 const Board = () => {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
@@ -12,6 +19,7 @@ const Board = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+  const [newColumnTitle, setNewColumnTitle] = useState("");
 
   const loadBoard = async () => {
     const { data: cols, error: colsError } = await supabase
@@ -134,6 +142,63 @@ const Board = () => {
     await loadBoard();
   };
 
+  const handleUpdateCardTitle = async (columnId: string, cardId: string, newTitle: string) => {
+    const prev = columns;
+    // Optimistic update
+    setColumns((cur) =>
+      cur.map((c) =>
+        c.id === columnId
+          ? {
+              ...c,
+              cards: c.cards.map((card) => (card.id === cardId ? { ...card, title: newTitle } : card)),
+            }
+          : c
+      )
+    );
+
+    const { error } = await supabase.from('cards').update({ title: newTitle }).eq('id', cardId);
+    if (error) {
+      console.error('Failed to update title', error);
+      toast({ title: 'Failed to rename card', description: error.message || 'Unknown error', variant: 'destructive' });
+      setColumns(prev);
+      return;
+    }
+  };
+
+  const handleAddColumn = async () => {
+    const title = newColumnTitle.trim();
+    if (!title) return;
+
+    const tempId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? (crypto as any).randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+
+    const position = columns.length;
+
+    // Optimistic
+    setColumns((prev) => [...prev, { id: tempId, title, cards: [] }]);
+    setNewColumnTitle("");
+
+    const { data, error } = await supabase
+      .from('columns')
+      .insert({ title, position })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to add column', error);
+      toast({ title: 'Failed to add column', description: error.message || 'Unknown error', variant: 'destructive' });
+      // rollback
+      setColumns((prev) => prev.filter((c) => c.id !== tempId));
+      return;
+    }
+
+    console.log('Inserted column', data);
+    toast({ title: 'Column created', description: `“${title}” added.` });
+    await loadBoard();
+  };
+
   const findColumnIdByCard = (cardId: string) => {
     for (const c of columns) {
       if (c.cards.some((card) => card.id === cardId)) return c.id;
@@ -235,14 +300,52 @@ const Board = () => {
     }
   };
 
+  const onAddColumnKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddColumn();
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="overflow-x-auto">
           <div className="flex gap-4 pb-1">
             {columns.map((col) => (
-              <Column key={col.id} column={col} onAddCard={handleAddCard} onDeleteCard={handleDeleteCard} />
+              <Column
+                key={col.id}
+                column={col}
+                onAddCard={handleAddCard}
+                onDeleteCard={handleDeleteCard}
+                onUpdateCardTitle={handleUpdateCardTitle}
+              />
             ))}
+            <section className="w-72 shrink-0 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 border border-border">
+              <header className="px-1 pb-1">
+                <h2 className="text-sm font-semibold tracking-wide">Add Column</h2>
+              </header>
+              <div className="pt-1">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={newColumnTitle}
+                    onChange={(e) => setNewColumnTitle(e.target.value)}
+                    onKeyDown={onAddColumnKeyDown}
+                    placeholder="Column title"
+                    aria-label="Column title"
+                    className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddColumn}
+                    className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:opacity-90"
+                    aria-label="Add column"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </DndContext>
