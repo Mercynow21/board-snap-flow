@@ -1,6 +1,7 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import Column from "./Column";
 import { KanbanColumn } from "./types";
+import { initialColumns, initialCards } from "../../lib/data";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -16,7 +17,13 @@ import { arrayMove, sortableKeyboardCoordinates, SortableContext, horizontalList
 const PROJECT_ID = '00000000-0000-0000-0000-000000000001';
 
 const Board = () => {
-  const [columns, setColumns] = useState<KanbanColumn[]>([]);
+  const [columns, setColumns] = useState<KanbanColumn[]>(() => {
+    const colsWithCards: KanbanColumn[] = initialColumns.map((col) => ({
+      ...col,
+      cards: initialCards.filter((card) => card.columnId === col.id),
+    }));
+    return colsWithCards;
+  });
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -57,10 +64,10 @@ const Board = () => {
     setColumns(Array.from(colMap.values()));
   };
 
-  useEffect(() => {
-    loadBoard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   loadBoard();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const handleAddCard = async (columnId: string, title: string) => {
     const tempId =

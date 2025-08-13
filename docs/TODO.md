@@ -1,0 +1,105 @@
+Phase 1 — Project Setup & Prototype
+- [x] Scaffold project
+- [x] Create Vite + React + TypeScript app
+- [x] Configure absolute imports / tsconfig paths
+- [x] Add environment handling for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+- [x] Install dependencies
+- [x] @dnd-kit/core @dnd-kit/sortable @dnd-kit/modifiers
+- [x] UI: choose one (Tailwind or Mantine). If Tailwind: add PostCSS/Autoprefixer, base config.
+- [x] Utility: uuid (if generating IDs client-side)
+- [x] @supabase/supabase-js
+- [x] App layout skeleton
+- [x] Header with project name
+- [x] Board wrapper with horizontally scrollable columns
+- [x] Column component: header + list + “Add card” input/button
+- [x] Card component: compact, single-line title, ellipsis overflow
+- [x] Drag & drop prototype (local state only)
+- [x] Implement DndContext, sensors (pointer + keyboard)
+- [x] Make cards sortable within a column (SortableContext, verticalListSortingStrategy)
+- [x] Enable cross-column movement (update columnId + reindex positions)
+- [x] Smooth animations & drop transitions
+- [x] **Definition of Done (Phase 1)**
+- [x] Cards can be reordered within/between default columns (To Do, In Progress, Done) in local state
+- [x] No backend calls yet; refresh loses state
+- [x] Basic responsive layout and readable typography
+Phase 2 — Supabase Project & Database
+- [x] Create Supabase project
+- [x] Note URL and anon key; add to .env.local
+- [x] Database schema
+- [x] columns table: id (uuid, pk), title text, position int
+- [x] cards table: id (uuid, pk), column_id uuid fk, title text, position int
+- [x] Seed default columns with positions 0,1,2
+- [x] RLS & Policies
+- [x] Enable RLS
+- [x] Create permissive read/write policies for anon (public app)
+- [x] Supabase client
+- [x] Initialize singleton client in frontend
+- [x] **Definition of Done (Phase 2)**
+- [x] Tables exist with seed data
+- [x] Fetching from Supabase with a quick test works (e.g., console log)
+Phase 3 — Data Loading & Persistence (MVP)
+- [x] Load board on startup
+- [x] Fetch columns ordered by position
+- [x] Fetch cards ordered by position per column
+- [x] Normalize into in-memory state
+- [x] Create operations
+- [x] Add card: insert with column_id, position = last + 1, title
+- [x] Add column: insert with position = last + 1, title
+- [x] Update operations
+- [x] Edit card title: in-place input; auto-save on blur/Enter
+- [x] Reorder cards within a column: persist reordered position
+- [x] Move card across columns: update column_id and reindex positions in both affected columns
+- [x] Delete operations (cards)
+- [x] Delete card from UI and DB; reindex remaining positions
+- [x] Optimistic UI + Error handling
+- [x] Optimistically update local state; rollback on failure
+- [x] Global toast/inline error state
+- [x] **Definition of Done (Phase 3)**
+- [x] Refreshing the page preserves all changes
+- [x] Adding, editing, deleting, reordering, and cross-column moves persist in Supabase
+Phase 4 — Column Management (Advanced Functionality)
+- [x] Rename columns
+- [x] In-place edit for column title; auto-save on blur/Enter
+- [x] Reorder columns (optional but recommended)
+- [x] Make columns sortable horizontally; persist position
+- [x] Delete columns
+- [x] Confirm dialog (warn that cards in the column will also be deleted)
+- [x] Cascade delete: either DB FK ON DELETE CASCADE or manual delete cards then column
+- [x] Reindex remaining column positions
+- [x] **Definition of Done (Phase 4)**
+- [x] Columns can be added, renamed, reordered, and deleted with persistence
+- [x] Cards follow column deletes appropriately
+Phase 5 — UX Polish & Accessibility
+- [x] Editing UX
+- [x] Enter commits; Escape cancels; blur commits
+- [x] Auto-focus new card/column inputs
+- [ ] DND affordances
+- [ ] Drag overlay preview
+- [ ] Drop indicators (subtle)
+- [ ] Empty states
+- [ ] Show guidance when no columns/cards exist
+- [x] Keyboard support
+- [x] Tab/Enter for adding items
+- [x] Keyboard dragging via dnd-kit sensors if feasible
+- [x] Responsiveness
+- [x] Columns wrap/scroll nicely on small screens
+- [ ] **Definition of Done (Phase 5)**
+- [ ] Smooth, predictable interactions with clear feedback and no layout jank
+Phase 6 — Quality, Tooling, and Delivery
+- [x] Type safety & state management
+- [x] Define Column, Card types
+- [x] Utilities for stable reindexing after moves
+- [ ] Testing
+- [ ] Unit tests for position/reindex utilities
+- [ ] Integration test for add/move across columns logic
+- [x] Performance
+- [x] Avoid excessive network calls (batch updates on drop)
+- [ ] Indexes: (position) and FKs for faster queries
+- [x] DevEx
+- [x] Prettier + ESLint (TypeScript/React rules)
+- [ ] Simple CI lint/test
+- [ ] Deploy
+- [ ] Environment variables on host (e.g., Netlify/Vercel)
+- [ ] Smoke test against production DB
+- [ ] **Definition of Done (Phase 6)**
+- [ ] Tests pass; deployment live with correct env and basic monitoring/logging.
