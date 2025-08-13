@@ -1,0 +1,21 @@
+name: Create Experiment Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Name for the new experiment branch (e.g., feat/new-experiment)'
+        required: true
+        type: string
+
+jobs:
+  create_branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+
+      - name: Create and push new branch
+        run: |
+          git checkout -b ${{ github.event.inputs.branch_name }}
+          git push origin ${{ github.event.inputs.branch_name }}
